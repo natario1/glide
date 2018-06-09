@@ -76,8 +76,12 @@ final class GlideGenerator {
   private static final String REQUEST_MANAGER_QUALIFIED_NAME =
       "com.bumptech.glide.RequestManager";
 
+  // The androidx Jetifier renames android.support.* classes to the androidx.* package (#3080, #3107)
+  // Once Glide moves to androidx, the android.support version can be removed.
   private static final String VISIBLE_FOR_TESTING_QUALIFIED_NAME =
       "android.support.annotation.VisibleForTesting";
+  private static final String VISIBLE_FOR_TESTING_QUALIFIED_NAME_JETIFIED =
+      "androidx.annotation.VisibleForTesting";
 
   private static final String SUPPRESS_LINT_PACKAGE_NAME =
       "android.annotation";
@@ -174,11 +178,17 @@ final class GlideGenerator {
   }
 
   private Builder addReturnAnnotations(Builder builder, ExecutableElement methodToOverride) {
-    String visibleForTestingTypeQualifiedName =
+    TypeElement visibleForTestingTypeElement =
         processingEnv
             .getElementUtils()
-            .getTypeElement(VISIBLE_FOR_TESTING_QUALIFIED_NAME)
-            .toString();
+            .getTypeElement(VISIBLE_FOR_TESTING_QUALIFIED_NAME);
+    if (visibleForTestingTypeElement == null) {
+      visibleForTestingTypeElement =
+          processingEnv
+              .getElementUtils()
+              .getTypeElement(VISIBLE_FOR_TESTING_QUALIFIED_NAME_JETIFIED);
+    }
+    String visibleForTestingTypeQualifiedName = visibleForTestingTypeElement.toString();
 
     for (AnnotationMirror mirror : methodToOverride.getAnnotationMirrors()) {
       builder.addAnnotation(AnnotationSpec.get(mirror));
